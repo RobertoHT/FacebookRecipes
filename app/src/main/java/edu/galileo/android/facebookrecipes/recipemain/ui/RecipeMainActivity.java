@@ -24,6 +24,7 @@ import edu.galileo.android.facebookrecipes.RecipeListActivity;
 import edu.galileo.android.facebookrecipes.entities.Recipe;
 import edu.galileo.android.facebookrecipes.lib.base.ImageLoader;
 import edu.galileo.android.facebookrecipes.recipemain.RecipeMainPresenter;
+import edu.galileo.android.facebookrecipes.recipemain.di.RecipeMainComponent;
 import edu.galileo.android.facebookrecipes.recipemain.events.RecipeMainEvent;
 
 public class RecipeMainActivity extends AppCompatActivity implements RecipeMainView {
@@ -42,6 +43,7 @@ public class RecipeMainActivity extends AppCompatActivity implements RecipeMainV
     private RecipeMainPresenter presenter;
     private Recipe currentRecipe;
     private ImageLoader imageLoader;
+    private RecipeMainComponent component;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,7 +70,7 @@ public class RecipeMainActivity extends AppCompatActivity implements RecipeMainV
                 return false;
             }
         };
-        //imageLoader.setOnFinishedImageLoadingListener(glideRequestListener);
+        imageLoader.setOnFinishedImageLoadingListener(glideRequestListener);
     }
 
     @Override
@@ -105,7 +107,10 @@ public class RecipeMainActivity extends AppCompatActivity implements RecipeMainV
     }
 
     private void setupInjection() {
-        
+        FacebookRecipesApp app = (FacebookRecipesApp)getApplication();
+        component = app.getRecipeMainComponent(this, this);
+        imageLoader = getImageLoader();
+        presenter = getPresenter();
     }
 
     @Override
@@ -167,5 +172,13 @@ public class RecipeMainActivity extends AppCompatActivity implements RecipeMainV
     public void onGetRecipeError(String error) {
         String msgError = String.format(getString(R.string.recipemain_error), error);
         Snackbar.make(layoutContainer, msgError, Snackbar.LENGTH_SHORT).show();
+    }
+
+    public ImageLoader getImageLoader() {
+        return component.getImageLoader();
+    }
+
+    public RecipeMainPresenter getPresenter() {
+        return component.getPresenter();
     }
 }
