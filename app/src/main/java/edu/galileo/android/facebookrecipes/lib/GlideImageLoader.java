@@ -1,7 +1,10 @@
 package edu.galileo.android.facebookrecipes.lib;
 
+import android.app.Activity;
+import android.util.Log;
 import android.widget.ImageView;
 
+import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestListener;
@@ -13,22 +16,22 @@ import edu.galileo.android.facebookrecipes.lib.base.ImageLoader;
  */
 public class GlideImageLoader implements ImageLoader {
     private RequestManager glideRequestManager;
-    private RequestListener onFinishedLoadingListener;
+    private RequestListener onFinishedImageLoadingListener;
 
-    public GlideImageLoader(RequestManager glideRequestManager) {
-        this.glideRequestManager = glideRequestManager;
+    public void setLoaderContext(Activity activity) {
+        this.glideRequestManager = Glide.with(activity);
     }
 
     @Override
     public void load(ImageView imageView, String URL) {
-        if(onFinishedLoadingListener != null){
+        if (onFinishedImageLoadingListener != null) {
             glideRequestManager
                     .load(URL)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .centerCrop()
-                    .listener(onFinishedLoadingListener)
+                    .listener(onFinishedImageLoadingListener)
                     .into(imageView);
-        }else{
+        } else {
             glideRequestManager
                     .load(URL)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
@@ -39,8 +42,10 @@ public class GlideImageLoader implements ImageLoader {
 
     @Override
     public void setOnFinishedImageLoadingListener(Object listener) {
-        if(listener instanceof RequestListener){
-            this.onFinishedLoadingListener = (RequestListener) listener;
+        try {
+            this.onFinishedImageLoadingListener = (RequestListener) listener;
+        } catch (ClassCastException e) {
+            Log.e(this.getClass().getName(),e.getMessage());
         }
     }
 }

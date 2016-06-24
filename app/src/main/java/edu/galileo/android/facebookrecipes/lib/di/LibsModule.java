@@ -22,37 +22,31 @@ import edu.galileo.android.facebookrecipes.lib.base.ImageLoader;
 public class LibsModule {
     private Activity activity;
 
+    public LibsModule() {
+    }
     public LibsModule(Activity activity) {
         this.activity = activity;
     }
 
     @Provides
     @Singleton
-    ImageLoader providesImageLoader(RequestManager requestManager){
-        return new GlideImageLoader(requestManager);
+    EventBus provideEventBus() {
+        return new GreenRobotEventBus();
     }
 
     @Provides
     @Singleton
-    RequestManager providesRequestManager(Activity activity){
-        return Glide.with(activity);
+    ImageLoader provideImageLoader(Activity activity) {
+        GlideImageLoader imageLoader = new GlideImageLoader();
+        if (activity != null) {
+            imageLoader.setLoaderContext(activity);
+        }
+        return imageLoader;
     }
 
     @Provides
     @Singleton
-    Activity providesActivity(){
+    Activity provideActivity(){
         return this.activity;
-    }
-
-    @Provides
-    @Singleton
-    EventBus providesEventBus(org.greenrobot.eventbus.EventBus eventBus){
-        return new GreenRobotEventBus(eventBus);
-    }
-
-    @Provides
-    @Singleton
-    org.greenrobot.eventbus.EventBus providesLibraryEventBus(){
-        return org.greenrobot.eventbus.EventBus.getDefault();
     }
 }
