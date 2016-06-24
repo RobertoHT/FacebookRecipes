@@ -15,6 +15,10 @@ import edu.galileo.android.facebookrecipes.recipelist.event.RecipeListEvent;
 public class RecipeListRepositoryImpl implements RecipeListRepository {
     private EventBus eventBus;
 
+    public RecipeListRepositoryImpl(EventBus eventBus) {
+        this.eventBus = eventBus;
+    }
+
     @Override
     public void getSavedRecipes() {
         FlowCursorList storedRecipes = new FlowCursorList<Recipe>(false, Recipe.class);
