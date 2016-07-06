@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.annotation.Config;
+import org.robolectric.internal.ShadowExtractor;
 import org.robolectric.shadows.ShadowActivity;
 import org.robolectric.util.ActivityController;
 
@@ -25,6 +26,7 @@ import edu.galileo.android.facebookrecipes.login.ui.LoginActivity;
 import edu.galileo.android.facebookrecipes.recipelist.ui.RecipeListActivity;
 import edu.galileo.android.facebookrecipes.recipemain.ui.RecipeMainActivity;
 import edu.galileo.android.facebookrecipes.recipemain.ui.RecipeMainView;
+import edu.galileo.android.facebookrecipes.support.ShadowImageView;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
@@ -38,7 +40,7 @@ import static org.robolectric.Shadows.shadowOf;
  * <roberto.htamayo@gmail.com>
  */
 @RunWith(RobolectricGradleTestRunner.class)
-@Config(constants = BuildConfig.class, sdk = 21)
+@Config(constants = BuildConfig.class, sdk = 21, shadows = {ShadowImageView.class})
 public class RecipeMainActivityTest extends BaseTest {
     @Mock
     private Recipe currentRecipe;
@@ -94,6 +96,40 @@ public class RecipeMainActivityTest extends BaseTest {
         shadowActivity.clickMenuItem(R.id.action_list);
         Intent intent = shadowActivity.peekNextStartedActivity();
         assertEquals(new ComponentName(activity, RecipeListActivity.class), intent.getComponent());
+    }
+
+    @Test
+    public void testKeepButtonClicked_ShouldSaveRecipe() throws Exception {
+        activity.setRecipe(currentRecipe);
+
+        ImageButton imgKeep = (ImageButton)activity.findViewById(R.id.imgKeep);
+        imgKeep.performClick();
+        verify(presenter).saveRecipe(currentRecipe);
+    }
+
+    @Test
+    public void testDismissButtonClicked_ShouldDismissRecipe() throws Exception {
+        ImageButton imgDismiss = (ImageButton)activity.findViewById(R.id.imgDismiss);
+        imgDismiss.performClick();
+        verify(presenter).dismissRecipe();
+    }
+
+    @Test
+    public void testOnSwipeToKeep_ShouldSaveRecipe() throws Exception {
+        activity.setRecipe(currentRecipe);
+
+        ImageView imageRecipe = (ImageView)activity.findViewById(R.id.imgRecipe);
+        ShadowImageView shadowImage = (ShadowImageView) ShadowExtractor.extract(imageRecipe);
+        shadowImage.perfomSwipe(200, 200, 500, 250, 50);
+        verify(presenter).saveRecipe(currentRecipe);
+    }
+
+    @Test
+    public void testOnSwipeToDismiss_ShouldDiscardRecipe() throws Exception {
+        ImageView imageRecipe = (ImageView)activity.findViewById(R.id.imgRecipe);
+        ShadowImageView shadowImage = (ShadowImageView) ShadowExtractor.extract(imageRecipe);
+        shadowImage.perfomSwipe(200, 200, -500, 250, 50);
+        verify(presenter).dismissRecipe();
     }
 
     @Test
