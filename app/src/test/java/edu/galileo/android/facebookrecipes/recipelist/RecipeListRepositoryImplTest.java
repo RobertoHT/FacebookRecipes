@@ -18,10 +18,12 @@ import edu.galileo.android.facebookrecipes.BaseTest;
 import edu.galileo.android.facebookrecipes.BuildConfig;
 import edu.galileo.android.facebookrecipes.FacebookRecipesApp;
 import edu.galileo.android.facebookrecipes.entities.Recipe;
+import edu.galileo.android.facebookrecipes.entities.Recipe_Table;
 import edu.galileo.android.facebookrecipes.lib.base.EventBus;
 import edu.galileo.android.facebookrecipes.recipelist.event.RecipeListEvent;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
 import static org.mockito.Mockito.verify;
 
 /**
@@ -77,5 +79,49 @@ public class RecipeListRepositoryImplTest extends BaseTest {
         for(Recipe recipe:testRecipeList){
             recipe.delete();
         }
+    }
+
+    @Test
+    public void testUpdateRecipe() throws Exception {
+        String newRecipeId = "id1";
+        String titleBefore = "title before update";
+        String titleAfter = "title afeter update";
+        Recipe recipe = new Recipe();
+        recipe.setRecipeId(newRecipeId);
+        recipe.setTitle(titleBefore);
+        recipe.save();
+        recipe.setTitle(titleAfter);
+
+        repository.updateRecipe(recipe);
+
+        Recipe recipeFromDB = new Select().from(Recipe.class).where(Recipe_Table.recipeId.is(newRecipeId)).querySingle();
+
+        assertEquals(titleAfter, recipeFromDB.getTitle());
+        verify(eventBus).post(recipeListEventArgumentCaptor.capture());
+
+        RecipeListEvent event = recipeListEventArgumentCaptor.getValue();
+        assertEquals(RecipeListEvent.UPDATE_EVENT, event.getType());
+
+        recipe.delete();
+    }
+
+    @Test
+    public void testRemoveRecipe() throws Exception {
+        String newRecipeId = "id1";
+        Recipe recipe = new Recipe();
+        recipe.setRecipeId(newRecipeId);
+        recipe.save();
+
+        repository.removeRecipe(recipe);
+
+        assertFalse(recipe.exists());
+        verify(eventBus).post(recipeListEventArgumentCaptor.capture());
+
+        RecipeListEvent event = recipeListEventArgumentCaptor.getValue();
+        assertEquals(RecipeListEvent.DELETE_EVENT, event.getType());
+        assertEquals(1, event.getRecipeList().size());
+        assertEquals(recipe, event.getRecipeList().get(0));
+
+        recipe.delete();
     }
 }
