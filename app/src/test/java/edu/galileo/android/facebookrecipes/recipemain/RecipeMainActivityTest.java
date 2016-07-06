@@ -197,4 +197,6 @@ public class RecipeMainActivityTest extends BaseTest {
         assertNotNull(imgRecipe.getAnimation());
         assertTrue(imgRecipe.getAnimation().hasStarted());
     }
+
+    //Agregar Overrides en los metodos del setup
 }
