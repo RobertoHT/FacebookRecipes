@@ -5,11 +5,14 @@ import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 
+import com.facebook.FacebookActivity;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricGradleTestRunner;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.internal.ShadowExtractor;
 import org.robolectric.shadows.ShadowActivity;
@@ -33,6 +36,7 @@ import edu.galileo.android.facebookrecipes.support.ShadowRecyclerViewAdapter;
 
 import static junit.framework.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.robolectric.Shadows.shadowOf;
 
 /**
@@ -57,6 +61,7 @@ public class RecipeListActivityTest extends BaseTest {
     private OnItemCLickListener onItemClickListener;
 
     private ShadowActivity shadowActivity;
+    private ShadowRecyclerViewAdapter shadowAdapter;
     private ActivityController<RecipeListActivity> controller;
 
     @Override
@@ -155,5 +160,74 @@ public class RecipeListActivityTest extends BaseTest {
 
         toolbar.performClick();
         assertEquals(topScrollPosition, shadowRecyclerView.getSmoothScrollPosition());
+    }
+
+    @Test
+    public void testRecyclerViewItemClicked_ShouldStartViewActivity() throws Exception {
+        int positionToClick = 0;
+        setUpShadowAdapter(positionToClick);
+
+        shadowAdapter.itemVisible(positionToClick);
+        shadowAdapter.performItemClick(positionToClick);
+
+        Intent intent = shadowActivity.getNextStartedActivity();
+        assertEquals(Intent.ACTION_VIEW, intent.getAction());
+        assertEquals(recipeList.get(positionToClick).getSourceURL(), intent.getDataString());
+    }
+
+    @Test
+    public void testRecyclerViewFavoriteClicked_ShouldCallPresenter() throws Exception {
+        int positionToClick = 0;
+        setUpShadowAdapter(positionToClick);
+
+        shadowAdapter.itemVisible(positionToClick);
+        shadowAdapter.performItemClickOverViewInHolder(positionToClick, R.id.imgFav);
+
+        verify(presenter).toggleFavorite(recipe);
+    }
+
+    @Test
+    public void testRecyclerViewRemoveClicked_ShouldCallPresenter() throws Exception {
+        int positionToClick = 0;
+        setUpShadowAdapter(positionToClick);
+
+        shadowAdapter.itemVisible(positionToClick);
+        shadowAdapter.performItemClickOverViewInHolder(positionToClick, R.id.imgDelete);
+
+        verify(presenter).removeRecipe(recipe);
+    }
+
+    @Test
+    public void testRecyclerViewFBShareClicked_ShouldStartFBActivity() throws Exception {
+        int positionToClick = 0;
+        setUpShadowAdapter(positionToClick);
+
+        shadowAdapter.itemVisible(positionToClick);
+        shadowAdapter.performItemClickOverViewInHolder(positionToClick, R.id.fbShare);
+
+        Intent intent = shadowActivity.getNextStartedActivity();
+        assertEquals(new ComponentName(RuntimeEnvironment.application, FacebookActivity.class), intent.getComponent());
+    }
+
+    @Test
+    public void testRecyclerViewFBSendClicked_ShouldStartFBActivity() throws Exception {
+        int positionToClick = 0;
+        setUpShadowAdapter(positionToClick);
+
+        shadowAdapter.itemVisible(positionToClick);
+        shadowAdapter.performItemClickOverViewInHolder(positionToClick, R.id.fbSend);
+
+        Intent intent = shadowActivity.getNextStartedActivity();
+        assertEquals(new ComponentName(RuntimeEnvironment.application, FacebookActivity.class), intent.getComponent());
+    }
+
+    private void setUpShadowAdapter(int positionToClick){
+        when(recipe.getSourceURL()).thenReturn("http://galileo.edu");
+        when(recipeList.get(positionToClick)).thenReturn(recipe);
+
+        RecyclerView recyclerView = (RecyclerView)activity.findViewById(R.id.recyclerView);
+        RecipesAdapter adapterPopulated = new RecipesAdapter(recipeList, imageLoader, onItemClickListener);
+        recyclerView.setAdapter(adapterPopulated);
+        shadowAdapter = (ShadowRecyclerViewAdapter) ShadowExtractor.extract(recyclerView.getAdapter());
     }
 }
